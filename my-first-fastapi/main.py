@@ -1,11 +1,13 @@
 from fastapi import FastAPI, Path, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field,computed_field
-from typing import Annotated,Literal
+from typing import Annotated,Literal, Optional
 import json
 
 app = FastAPI()
  
+#----------------------model to create patient-------------------
+
 class Patient(BaseModel):
     id: Annotated[str, Field(...,description='ID of the patient',examples=['P001'])]
     name: Annotated[str, Field(...,description='Name of the paitent')]
@@ -34,7 +36,20 @@ class Patient(BaseModel):
             return 'Normal'
         else:
             return 'Obese'
+        
+#--------------------Model to update patient--------------------------
 
+class update_patient(BaseModel): 
+    #if use optinal then must give default value.
+    name: Annotated[Optional[str], Field(default=None)]
+    city: Annotated[Optional[str], Field(default=None)]
+    age: Annotated[Optional[int], Field(default=None, gt=0, lt=100)]
+    gender: Annotated[Optional[Literal['male', 'female','others']], Field(default=None)]
+    height: Annotated[Optional[float], Field(default=None, gt=0)]
+    weight: Annotated[Optional[float], Field(default=None, gt=0)]
+    
+    
+#------------------------------------------------------------------------
 
 def load_data(): #laod the json file data
     with open('data.json', 'r') as f:  #'r'-->read mode || with --> is used to automatically open and close the file.
@@ -45,6 +60,8 @@ def save_data(data):
     with open('data.json','w') as f:
         json.dump(data,f)
         
+ #-----------------------------------------------------------------------       
+        
 @app.get("/")  # @app.--> this is route
 def hello():
     return {'message':'Pataient Management Syatem API'}
@@ -52,6 +69,8 @@ def hello():
 @app.get("/about")
 def about():
     return {'message': 'Fully functional api to manage patient records'}
+
+#--------------------------retrive patient-->form db-------------------------------------------
 
 @app.get("/view")
 def view():
@@ -89,7 +108,7 @@ def sort_patient(sort_by: str = Query(...,description='Sort on the basis of heig
     
     return sorted_data
 
-#create patient---> pydantic will be used here to validate data 
+#------------------------create patient---> pydantic will be used here to validate data ------------------------------
 
 @app.post('/create')
 
@@ -108,3 +127,25 @@ def create_patient(patient: Patient):
     #save the data in the db(json file)
     save_data(data)
     return JSONResponse(status_code=201,content={'message': 'patient created successfully'})  #JSONResponse used to give user message that the data is inserted 
+
+#-----------update patient data-----------------
+@app.put('/edit/{patient_id}')  #patient_id will go as path parameter
+def update_patient(patient_id,patientUpdate: update_patient):
+    
+    #load current data
+    data= load_data()
+    
+    if patient_id not in data:
+        raise HTTPException(status_code=404,detail='Patient not found')
+    
+    existing_patient_data = data[patient_id] #extract patient data 
+    
+    #convert pydantic obj to dict so that data can be updated
+    updated_patient_data = patientUpdate.model_dump(exclude_unset=True)  #only return updated fields::will not return unset fields with ::**exclude_unset=True**
+    
+    #run a loop on updated patient info in existing_patient_data
+    for key,value in updated_patient_data.items():   #key, value as for dic---> {'key':'value'}
+        existing_patient_data[key]=value
+    
+    
+    
