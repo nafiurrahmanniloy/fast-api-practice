@@ -1,15 +1,50 @@
 from fastapi import FastAPI, Path, HTTPException, Query
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field,computed_field
+from typing import Annotated,Literal
 import json
 
 app = FastAPI()
  
+class Patient(BaseModel):
+    id: Annotated[str, Field(...,description='ID of the patient',examples=['P001'])]
+    name: Annotated[str, Field(...,description='Name of the paitent')]
+    city: Annotated[str,Field(...,description='city where the patient from')]
+    age: Annotated[str,Field(..., gt=0,lt=100,description='Age of the patient')]
+    gender: Annotated[str,Literal['male','female','others'],Field(...,description='Gender of the patient')]  #Literal is used here to give options to the user
+    height: Annotated[float,Field(...,gt=0,description='height of the patient in mtrs')]
+    weight: Annotated[float,Field(...,gt=0,description='weight of the patient in kgs')]
+    
+    
+    #calculate bmi 
+    @computed_field
+    @property
+    def bmi(self)->float:
+        bmi =round(self.weight/(self.height**2),2)
+        return bmi
+    
+    @computed_field
+    @property
+    def verdict(self)-> str:
+        if self.bmi < 18.5:
+            return 'Underweight'
+        elif self.bmi< 25:
+            return 'Normal'
+        elif self.bmi < 30:
+            return 'Normal'
+        else:
+            return 'Obese'
+
 
 def load_data(): #laod the json file data
     with open('data.json', 'r') as f:  #'r'-->read mode || with --> is used to automatically open and close the file.
         data= json.load(f)
     return data    
     
-
+def save_data(data):
+    with open('data.json','w') as f:
+        json.dump(data,f)
+        
 @app.get("/")  # @app.--> this is route
 def hello():
     return {'message':'Pataient Management Syatem API'}
@@ -53,3 +88,23 @@ def sort_patient(sort_by: str = Query(...,description='Sort on the basis of heig
     sorted_data=sorted(data.values(), key= lambda x: x.get(sort_by,0), reverse=sort_order) #sorting data
     
     return sorted_data
+
+#create patient---> pydantic will be used here to validate data 
+
+@app.post('/create')
+
+def create_patient(patient: Patient):
+    
+    #load the exesting data 
+    data=load_data()
+    
+    #check if the patient_id already in the db
+    if patient.id in data:
+        raise HTTPException(status_code=400,detail='Patient already exists')
+    #add new patient to the db with the key:: patient id 
+    data[patient.id]= patient.model_dump(exclude=['id'])
+    
+    
+    #save the data in the db(json file)
+    save_data(data)
+    return JSONResponse(status_code=201,content={'message': 'patient created successfully'})  #JSONResponse used to give user message that the data is inserted 
