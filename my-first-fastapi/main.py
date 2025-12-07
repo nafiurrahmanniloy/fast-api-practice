@@ -148,4 +148,34 @@ def update_patient(patient_id,patientUpdate: update_patient):
         existing_patient_data[key]=value
     
     
+    # bmi and verdict also needs to be updated 
+    #first convert existing_patient_data to pydatic obj to calculate updated bmi and verdict
+   
+    existing_patient_data['id']=patient_id  #pass the patient id first 
+    patient_pydantic_obj = Patient(**existing_patient_data)    #create a patient class obj 
     
+    #convert pydantic obj to dict 
+    existing_patient_data = patient_pydantic_obj.model_dump(exclude=['id'])
+    
+    #add the dict to data
+    data[patient_id]=existing_patient_data
+    
+    save_data(data)
+    
+    return JSONResponse(status_code=200,content='Patient data updated successfully')
+
+# ------------------ delete patient----------------------
+@app.delete('/delete{patient_id}')
+
+def delete_patient(patient_id:str):
+    
+    data= load_data()
+    
+    if patient_id not in data:
+        raise HTTPException(status_code=404,detail=['Patient not found'])
+    
+    del data[patient_id]
+    
+    save_data(data)
+    
+    return JSONResponse(status_code=200,content=['Patient deleted'])
