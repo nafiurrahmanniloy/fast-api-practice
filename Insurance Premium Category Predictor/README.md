@@ -2,7 +2,7 @@
 
 This project shows how to wrap a trained Machine Learning model in a clean, production-style API using FastAPI, and then plug that API into a simple frontend for interactive insurance premium predictions.
 
-![App Screenshot](Screenshot-2025-12-09-232440.jpg)
+![App Screenshot](Screenshot-2025-12-09-232440.png)
 
 ## 🔧 What this project does
 
@@ -53,3 +53,4 @@ The `frontend.py` file acts as a client (for example, with Streamlit):
 3. Start the frontend (adjust if you wired it differently):
 
    `streamlit run frontend.py`
+
