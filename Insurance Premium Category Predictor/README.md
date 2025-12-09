@@ -2,6 +2,8 @@
 
 This project shows how to wrap a trained Machine Learning model in a clean, production-style API using FastAPI, and then plug that API into a simple frontend for interactive insurance premium predictions.
 
+![App Screenshot](Screenshot-2025-12-09-232440.jpg)
+
 ## 🔧 What this project does
 
 We take a trained insurance premium model saved as `model.pkl` and:
