@@ -53,5 +53,3 @@ The `frontend.py` file acts as a client (for example, with Streamlit):
 3. Start the frontend (adjust if you wired it differently):
 
    `streamlit run frontend.py`
-
-
