@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from model.predict import model,MODEL_VERSION,predict_output
 from schema.user_input import UserInput
+from schema.prediction_response import PredictionResponse
 
 
 app = FastAPI()
@@ -23,7 +24,7 @@ def health_check():
     }
 
 
-@app.post('/predict')
+@app.post('/predict',response_model=PredictionResponse)  #! Now the API output will be validated with response_model=PredictionResponse
 def predict_premium(data: UserInput):  #data will come from request body-->   Lets say :: data is an obj of UserInput class
 
     user_input = {     #! creating a dict to pass data to the ml model which is in predict_output function;
@@ -41,7 +42,7 @@ def predict_premium(data: UserInput):  #data will come from request body-->   Le
         prediction= predict_output(user_input) #this is the predicted value from the model 
 
         #now pass the data as json to the output 
-        return JSONResponse(status_code=200,content={'predicted_catagory': prediction})
+        return JSONResponse(status_code=200,content={'response': prediction})
     
     except Exception as e:
         
